@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>kea leases</title>
+    </head>
+    <body>
+        <script>
+            const expandElements = shouldExpand => {
+                let detailsElements = document.querySelectorAll("details");
+                
+                detailsElements = [...detailsElements];
+
+                if (shouldExpand) {
+                    detailsElements.map(item => item.setAttribute("open", shouldExpand));
+                } else {
+                    detailsElements.map(item => item.removeAttribute("open"));
+                }
+            };
+        </script>
+
+        <button onClick="expandElements(true)">Expand all</button>
+        <button onClick="expandElements(false)">Collapse all</button>
+
+        <table style="width:80%;table-layout:fixed;" border="1">
+            <tr>
+                <th align="left">ip address</th>
+                <th align="left">mac address</th>
+                <th align="left">expires</th>
+                <th align="left">hostname</th>
+                <th align="left">details</th>
+            </tr>
+            {% for lease in leases %}
+            <tr>
+                <th align="left">{{ lease.ip_addr }}</th>
+                <th align="left">{{ lease.hw_addr }}</th>
+                <!--- TODO: show this is local TZ --->
+                <th align="left">{{ lease.expires }}</th>
+
+                {% match lease.hostname %}
+                    {% when Some with (name) %}
+                <th align="left">{{ name }}</th>
+                    {% when None %}
+                <th align="left"><i>not provided</i></th>
+                {% endmatch %}
+
+                <th align="left">
+                    <details>
+                        <summary>summary</summary>
+                        <table>
+                            <tbody>
+                                {% match lease.client_id %}
+                                    {% when Some with (id) %}
+                                <tr>
+                                    <th align="right" scope="row">client id</th>
+                                    <th>:</th>
+                                    <td align="left">{{ id }}</td>
+                                </tr>
+                                    {% when None %}
+                                {% endmatch %}
+                                <tr>
+                                    <th align="right" scope="row">lifetime</th>
+                                    <th>:</th>
+                                    <td align="left">{{ humantime::format_duration(lease.lifetime.clone()) }}</td>
+                                </tr>
+                                <tr>
+                                    <th align="right" scope="row">subnet id</th>
+                                    <th>:</th>
+                                    <td align="left">{{ lease.subnet_id }}</td>
+                                </tr>
+                                <tr>
+                                    <th align="right" scope="row">forward fqdn</th>
+                                    <th>:</th>
+                                    <td align="left">{{ lease.fqdn_fwd }}</td>
+                                </tr>
+                                <tr>
+                                    <th align="right" scope="row">reverse fqdn</th>
+                                    <th>:</th>
+                                    <td align="left">{{ lease.fqdn_rev }}</td>
+                                </tr>
+                                <tr>
+                                    <th align="right" scope="row">state</th>
+                                    <th>:</th>
+                                    <td align="left">{{ lease.state }}</td>
+                                </tr>
+                                {% match lease.user_context %}
+                                    {% when Some with (ctx) %}
+                                <tr>
+                                    <th align="right" scope="row">user context</th>
+                                    <th>:</th>
+                                    <td align="left">{{ ctx }}</td>
+                                </tr>
+                                    {% when None %}
+                                {% endmatch %}
+                                <tr>
+                                    <th align="right" scope="row">pool id</th>
+                                    <th>:</th>
+                                    <td align="left">{{ lease.pool_id }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </details>
+                </th>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>

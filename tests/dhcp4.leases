@@ -1,0 +1,4 @@
+address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
+192.168.1.21,a8:fc:5d:6b:ef:ed,,86400,1716402166,1,0,0,,0,,0
+192.168.1.22,c7:91:77:a0:03:dd,,86400,1716402674,1,0,0,,0,,0
+192.168.1.22,c7:91:77:a0:03:dd,,0,1716316274,1,0,0,,0,,0

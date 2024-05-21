@@ -1,0 +1,14 @@
+[package]
+name = "kea_leases_viewer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+askama = "0.12.1"
+chrono = "0.4.38"
+humantime = "2.1.0"
+regex = "1.10.4"
+rouille = "3.6.2"
+thiserror = "1.0.61"

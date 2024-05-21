@@ -1,0 +1,5 @@
+BIND_ADDR="0.0.0.0:80"
+export BIND_ADDR
+
+LEASES_FILE="/var/db/kea/dhcp4.leases"
+export LEASES_FILE
