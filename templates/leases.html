@@ -2,106 +2,202 @@
 <html lang="en">
     <head>
         <title>kea leases</title>
+        <style>
+            .main-table {
+                margin-top: 10px;
+                margin-left: 6px;
+                font-size: 12pt;
+                table-layout: auto !important;
+                width: 80%;
+            }
+            th, td, thead th, tbody td, tfoot td, tfoot th {
+                width: auto !important;
+                padding: 4px;
+            }
+            .main-table th {
+                font-size: 14pt;
+            }
+            table, th, td {
+                border: 1px solid;
+                border-collapse: collapse;
+                text-align: left;
+            }
+            .details-table th {
+                font-size: 10pt;
+            }
+            .details-table {
+                font-size: 10pt;
+                border: none;
+            }
+            .details-table * {
+                padding: 2px;
+                border: none;
+            }
+            .details-list {
+                background-color: #f1f1f1;
+            }
+            .collapsed.collapse-button::after {
+                content: '⯈';
+            }
+            :not(.collapsed).collapse-button::after {
+                content: '⯆';
+            }
+            .collapsed.details-list {
+                display: none;
+            }
+        </style>
     </head>
     <body>
-        <script>
-            const expandElements = shouldExpand => {
-                let detailsElements = document.querySelectorAll("details");
-                
-                detailsElements = [...detailsElements];
+        <button class="expand-all">Expand all</button>
+        <button class="collapse-all">Collapse all</button>
+        <br>
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>
+                        ip address 
+                       <a href="?sort=ip">🠇</a>
+                       <a href="?sort=ip&order_desc=true">🠅</a>
+                    </th>
+                    <th>
+                        mac address
+                       <a href="?sort=mac">🠇</a>
+                       <a href="?sort=mac&order_desc=true">🠅</a>
+                    </th>
+                    <th>
+                        expires
+                       <a href="?sort=exp">🠇</a>
+                       <a href="?sort=exp&order_desc=true">🠅</a>
+                    </th>
+                    <th>
+                        hostname
+                       <a href="?sort=name">🠇</a>
+                       <a href="?sort=name&order_desc=true">🠅</a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lease in leases %}
+                <tr>
+                    <td class="collapse-button"></td>
+                    <td>{{ lease.ip_addr }}</td>
+                    <td>{{ lease.hw_addr }}</td>
+                    <td>{{ crate::lease::local_time(lease.expires) }}</td>
 
-                if (shouldExpand) {
-                    detailsElements.map(item => item.setAttribute("open", shouldExpand));
-                } else {
-                    detailsElements.map(item => item.removeAttribute("open"));
-                }
-            };
-        </script>
-
-        <button onClick="expandElements(true)">Expand all</button>
-        <button onClick="expandElements(false)">Collapse all</button>
-
-        <table style="width:80%;table-layout:fixed;" border="1">
-            <tr>
-                <th align="left">ip address</th>
-                <th align="left">mac address</th>
-                <th align="left">expires</th>
-                <th align="left">hostname</th>
-                <th align="left">details</th>
-            </tr>
-            {% for lease in leases %}
-            <tr>
-                <th align="left">{{ lease.ip_addr }}</th>
-                <th align="left">{{ lease.hw_addr }}</th>
-                <!--- TODO: show this is local TZ --->
-                <th align="left">{{ lease.expires }}</th>
-
-                {% match lease.hostname %}
-                    {% when Some with (name) %}
-                <th align="left">{{ name }}</th>
-                    {% when None %}
-                <th align="left"><i>not provided</i></th>
-                {% endmatch %}
-
-                <th align="left">
-                    <details>
-                        <summary>summary</summary>
-                        <table>
+                    {% match lease.hostname %}
+                        {% when Some with (name) %}
+                    <td>{{ name }}</td>
+                        {% when None %}
+                    <td><i>not provided</i></td>
+                    {% endmatch %}
+                </tr>
+                <tr class="details-list">
+                    <td></td>
+                    <td colspan="4">
+                        <table class="details-table">
                             <tbody>
+                                <tr>
+                                    <td>-</td>
+                                    <th>expires (utc timestamp)</th>
+                                    <td></td>
+                                    <td>{{ lease.expires.timestamp() }}</td>
+                                </tr>
                                 {% match lease.client_id %}
                                     {% when Some with (id) %}
                                 <tr>
-                                    <th align="right" scope="row">client id</th>
-                                    <th>:</th>
-                                    <td align="left">{{ id }}</td>
+                                    <td>-</td>
+                                    <th>client id:</th>
+                                    <td></td>
+                                    <td>{{ id }}</td>
                                 </tr>
                                     {% when None %}
                                 {% endmatch %}
                                 <tr>
-                                    <th align="right" scope="row">lifetime</th>
-                                    <th>:</th>
-                                    <td align="left">{{ humantime::format_duration(lease.lifetime.clone()) }}</td>
+                                    <td>-</td>
+                                    <th>lifetime:</th>
+                                    <td></td>
+                                    <td>{{ humantime::format_duration(lease.lifetime.clone()) }}</td>
                                 </tr>
                                 <tr>
-                                    <th align="right" scope="row">subnet id</th>
-                                    <th>:</th>
-                                    <td align="left">{{ lease.subnet_id }}</td>
+                                    <td>-</td>
+                                    <th>subnet id:</th>
+                                    <td></td>
+                                    <td>{{ lease.subnet_id }}</td>
                                 </tr>
                                 <tr>
-                                    <th align="right" scope="row">forward fqdn</th>
-                                    <th>:</th>
-                                    <td align="left">{{ lease.fqdn_fwd }}</td>
+                                    <td>-</td>
+                                    <th>forward fqdn:</th>
+                                    <td></td>
+                                    <td>{{ lease.fqdn_fwd }}</td>
                                 </tr>
                                 <tr>
-                                    <th align="right" scope="row">reverse fqdn</th>
-                                    <th>:</th>
-                                    <td align="left">{{ lease.fqdn_rev }}</td>
+                                    <td>-</td>
+                                    <th>reverse fqdn:</th>
+                                    <td></td>
+                                    <td>{{ lease.fqdn_rev }}</td>
                                 </tr>
                                 <tr>
-                                    <th align="right" scope="row">state</th>
-                                    <th>:</th>
-                                    <td align="left">{{ lease.state }}</td>
+                                    <td>-</td>
+                                    <th>state:</th>
+                                    <td></td>
+                                    <td>{{ lease.state }}</td>
                                 </tr>
                                 {% match lease.user_context %}
                                     {% when Some with (ctx) %}
                                 <tr>
-                                    <th align="right" scope="row">user context</th>
-                                    <th>:</th>
-                                    <td align="left">{{ ctx }}</td>
+                                    <td>-</td>
+                                    <th>user context:</th>
+                                    <td></td>
+                                    <td>{{ ctx }}</td>
                                 </tr>
                                     {% when None %}
                                 {% endmatch %}
                                 <tr>
-                                    <th align="right" scope="row">pool id</th>
-                                    <th>:</th>
-                                    <td align="left">{{ lease.pool_id }}</td>
+                                    <td>-</td>
+                                    <th>pool id:</th>
+                                    <td></td>
+                                    <td>{{ lease.pool_id }}</td>
                                 </tr>
                             </tbody>
                         </table>
-                    </details>
-                </th>
-            </tr>
-            {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+        <script>
+            let buttons = document.getElementsByClassName("collapse-button");
+            for (let button of buttons) {
+                button.addEventListener("click", function() {
+                    this.classList.toggle("collapsed");
+                    // Get the next row and toggle its display variable
+                    let details = this.parentElement.nextElementSibling;
+                    details.classList.toggle("collapsed");
+                });
+                
+                button.classList.add("collapsed");
+                let details = button.parentElement.nextElementSibling;
+                details.classList.add("collapsed")
+            }
+
+            document.getElementsByClassName("expand-all")[0].addEventListener(
+                "click", function() {
+                    [...document.getElementsByClassName("details-list")]
+                    .map(x => x.classList.remove("collapsed"));
+                    [...document.getElementsByClassName("collapse-button")]
+                    .map(x => x.classList.remove("collapsed"));
+                }
+            )
+
+            document.getElementsByClassName("collapse-all")[0].addEventListener(
+                "click", function() {
+                    [...document.getElementsByClassName("details-list")]
+                    .map(x => x.classList.add("collapsed"));
+                    [...document.getElementsByClassName("collapse-button")]
+                    .map(x => x.classList.add("collapsed"));
+                }
+            )
+        </script>
     </body>
 </html>

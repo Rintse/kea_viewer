@@ -73,6 +73,11 @@ pub enum FileParseError {
     },
 }
 
+// used in askama template due to illegality of `&`
+pub fn local_time(t: &DateTime<Utc>) -> chrono::DateTime<chrono::Local>{
+    t.with_timezone(&chrono::Local)
+}
+
 impl From<(usize, ParseError)> for FileParseError {
     fn from((line, source): (usize, ParseError)) -> Self {
         Self::ParseLease { source, line }

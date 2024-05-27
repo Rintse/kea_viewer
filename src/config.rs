@@ -11,8 +11,8 @@ impl Settings {
     /// environment variable of the same name, but capitalized.
     pub fn new() -> Self {
         let leases_file: PathBuf = env::var("LEASES_FILE")
-            .map(|s| s.into())
-            .unwrap_or("/var/db/kea/dhcp4.leases".into());
+            .map(std::convert::Into::into)
+            .unwrap_or("/var/db/kea/".into());
 
         // TODO: catch the parse on envvar parse
         let bind_addr: SocketAddrV4 = env::var("BIND_ADDR")
