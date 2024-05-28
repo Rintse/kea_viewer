@@ -36,10 +36,10 @@
             .details-list {
                 background-color: #f1f1f1;
             }
-            .collapsed.collapse-button::after {
+            .collapsed.collapse-button::before {
                 content: '⯈';
             }
-            :not(.collapsed).collapse-button::after {
+            :not(.collapsed).collapse-button::before {
                 content: '⯆';
             }
             .collapsed.details-list {
@@ -54,7 +54,6 @@
         <table class="main-table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>
                         ip address 
                        <a href="?sort=ip">🠇</a>
@@ -80,8 +79,7 @@
             <tbody>
                 {% for lease in leases %}
                 <tr>
-                    <td class="collapse-button"></td>
-                    <td>{{ lease.ip_addr }}</td>
+                    <td class="collapse-button">{{ lease.ip_addr }}</td>
                     <td>{{ lease.hw_addr }}</td>
                     <td>{{ crate::lease::local_time(lease.expires) }}</td>
 
@@ -93,7 +91,6 @@
                     {% endmatch %}
                 </tr>
                 <tr class="details-list">
-                    <td></td>
                     <td colspan="4">
                         <table class="details-table">
                             <tbody>
@@ -170,6 +167,9 @@
             let buttons = document.getElementsByClassName("collapse-button");
             for (let button of buttons) {
                 button.addEventListener("click", function() {
+                    // cancel click event if selecting text
+                    if (document.getSelection().type === 'Range') return;
+
                     this.classList.toggle("collapsed");
                     // Get the next row and toggle its display variable
                     let details = this.parentElement.nextElementSibling;
