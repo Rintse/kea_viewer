@@ -32,25 +32,25 @@ pub enum ParseError {
         #[from]
         source: AddrParseError,
     },
-    
+
     #[error("Invalid lease duration: {0}")]
     Duration(String),
-    
+
     #[error("Invalid lease expiration time: {0}")]
     Time(String),
-    
+
     #[error("Invalid subnet id: {0}")]
     SubnetId(String),
-    
+
     #[error("Invalid forward FQDN: {0}")]
     FqdnFwd(String),
-    
+
     #[error("Invalid reverse FQDN: {0}")]
     FqdnRev(String),
 
     #[error("Invalid state: {0}")]
     State(String),
-    
+
     #[error("Invalid pool ID")]
     PoolId(String),
 }
@@ -67,14 +67,11 @@ pub enum FileParseError {
     Empty,
 
     #[error("Error parsing lease:\n{source}")]
-    ParseLease {
-        source: ParseError,
-        line: usize,
-    },
+    ParseLease { source: ParseError, line: usize },
 }
 
 // used in askama template due to illegality of `&`
-pub fn local_time(t: &DateTime<Utc>) -> chrono::DateTime<chrono::Local>{
+pub fn local_time(t: &DateTime<Utc>) -> chrono::DateTime<chrono::Local> {
     t.with_timezone(&chrono::Local)
 }
 
@@ -92,45 +89,50 @@ fn empty_str_to_none(s: &str) -> Option<String> {
 }
 
 fn parse_duration(s: &str) -> Result<Duration, ParseError> {
-    let secs: u64 = s.parse::<u64>()
+    let secs: u64 = s
+        .parse::<u64>()
         .map_err(|_| ParseError::Duration(s.to_owned()))?;
     Ok(Duration::from_secs(secs))
 }
 
 fn parse_datetime(s: &str) -> Result<DateTime<Utc>, ParseError> {
-    let secs: i64 = s.parse::<i64>()
+    let secs: i64 = s
+        .parse::<i64>()
         .map_err(|_| ParseError::Duration(s.to_owned()))?;
-    DateTime::from_timestamp(secs, 0)
-        .ok_or(ParseError::Time(s.to_owned()))
+    DateTime::from_timestamp(secs, 0).ok_or(ParseError::Time(s.to_owned()))
 }
 
 fn parse_subnet_id(s: &str) -> Result<u32, ParseError> {
-    s.parse::<u32>().map_err(|_| ParseError::SubnetId(s.to_owned()))
+    s.parse::<u32>()
+        .map_err(|_| ParseError::SubnetId(s.to_owned()))
 }
 
 fn parse_fqdn_fwd(s: &str) -> Result<u32, ParseError> {
-    s.parse::<u32>().map_err(|_| ParseError::FqdnFwd(s.to_owned()))
+    s.parse::<u32>()
+        .map_err(|_| ParseError::FqdnFwd(s.to_owned()))
 }
 
 fn parse_fqdn_rev(s: &str) -> Result<u32, ParseError> {
-    s.parse::<u32>().map_err(|_| ParseError::FqdnRev(s.to_owned()))
+    s.parse::<u32>()
+        .map_err(|_| ParseError::FqdnRev(s.to_owned()))
 }
 
 fn parse_state(s: &str) -> Result<u32, ParseError> {
-    s.parse::<u32>().map_err(|_| ParseError::State(s.to_owned()))
+    s.parse::<u32>()
+        .map_err(|_| ParseError::State(s.to_owned()))
 }
 
 fn parse_pool_id(s: &str) -> Result<u32, ParseError> {
-    s.parse::<u32>().map_err(|_| ParseError::PoolId(s.to_owned()))
+    s.parse::<u32>()
+        .map_err(|_| ParseError::PoolId(s.to_owned()))
 }
-
 
 pub fn parse_line(line: &str) -> Result<Lease, ParseError> {
     let mut fields = line.split(',');
     let mut idx: usize = 0;
     let mut next_field = || {
         idx += 1;
-        fields.next().ok_or(ParseError::NotEnoughFields(idx-1)) 
+        fields.next().ok_or(ParseError::NotEnoughFields(idx - 1))
     };
 
     let ip_addr = next_field()?.parse::<Ipv4Addr>()?;
@@ -162,7 +164,6 @@ pub fn parse_line(line: &str) -> Result<Lease, ParseError> {
     })
 }
 
-/// Just reads the given file and looks for lease blocks by scanning over the lines
 pub fn parse_file(file: &Path) -> Result<Vec<Lease>, FileParseError> {
     let contents = fs::read_to_string(file)?;
     let mut lines = contents.lines();
@@ -174,7 +175,6 @@ pub fn parse_file(file: &Path) -> Result<Vec<Lease>, FileParseError> {
         .map(|(i, r)| r.map_err(|e| FileParseError::from((i, e))))
         .collect()
 }
-
 
 #[test]
 fn test_parse_lease() {

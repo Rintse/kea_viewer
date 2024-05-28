@@ -12,4 +12,6 @@ behaviour:
 ```bash
 BIND_ADDR="0.0.0.0:80" # The socket address that the HTTP server binds to
 LEASES_FILE="/var/db/kea/dhcp4.leases" # The dhcp4.leases file location
+# If LEASES_FILE is a directory, all files in that directory will be used
+RUST_LOG=debug # Additionally, use env_logger variables to configure logging
 ```
