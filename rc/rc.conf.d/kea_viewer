@@ -1,8 +1,8 @@
 BIND_ADDR="0.0.0.0:80"
 export BIND_ADDR
 
-LEASES_FILE="/var/db/kea/dhcp4.leases"
-export LEASES_FILE
+LEASES_DB="/var/db/kea/"
+export LEASES_DB
 
 RUST_LOG=info
 export RUST_LOG

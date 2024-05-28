@@ -88,8 +88,8 @@ fn files_in_dir(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
 
 fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
     // For a directory, look at all files
-    let leases = if ctx.settings.leases_file.is_dir() {
-        let files = files_in_dir(&ctx.settings.leases_file);
+    let leases = if ctx.settings.leases_db.is_dir() {
+        let files = files_in_dir(&ctx.settings.leases_db);
         match files {
             Ok(files) => {
                 let results: Result<Vec<Vec<Lease>>, FileParseError> =
@@ -103,8 +103,8 @@ fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
         }
     }
     // For a file, read just the one
-    else if ctx.settings.leases_file.is_file() {
-        lease::parse_file(&ctx.settings.leases_file)
+    else if ctx.settings.leases_db.is_file() {
+        lease::parse_file(&ctx.settings.leases_db)
     } else {
         unreachable!("right?");
     };
