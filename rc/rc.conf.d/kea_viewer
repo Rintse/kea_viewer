@@ -3,3 +3,6 @@ export BIND_ADDR
 
 LEASES_FILE="/var/db/kea/dhcp4.leases"
 export LEASES_FILE
+
+RUST_LOG=info
+export RUST_LOG
