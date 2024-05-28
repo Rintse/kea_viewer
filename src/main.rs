@@ -1,7 +1,6 @@
 mod config;
 mod lease;
 mod server;
-mod viewer;
 use crate::server::handler;
 use log::info;
 
