@@ -6,22 +6,29 @@ pub struct Settings {
     pub bind_addr: SocketAddrV4,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Could not parse binding address `{0}`")]
+    AddrParse(String),
+}
+
 impl Settings {
     /// Creates default settings where each field may be overwritten by an
     /// environment variable of the same name, but capitalized.
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, Error> {
         let leases_db: PathBuf = env::var("LEASES_DB")
             .map(std::convert::Into::into)
             .unwrap_or("/var/db/kea/".into());
 
-        // TODO: catch the parse on envvar parse
-        let bind_addr: SocketAddrV4 = env::var("BIND_ADDR")
-            .map(|s| s.parse::<SocketAddrV4>().unwrap())
-            .unwrap_or("127.0.0.1:8080".parse().unwrap());
+        let bind_addr = match env::var("BIND_ADDR") {
+            Ok(addr) => addr.parse::<SocketAddrV4>()
+                .map_err(|_| Error::AddrParse(addr.to_owned()))?,
+            Err(_) => "127.0.0.1:8080".parse::<SocketAddrV4>().unwrap(),
+        };
 
-        Self {
+        Ok(Self {
             leases_db,
             bind_addr,
-        }
+        })
     }
 }

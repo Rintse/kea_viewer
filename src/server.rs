@@ -5,6 +5,7 @@ use chrono::DateTime;
 use log::{debug, info, warn};
 use rouille::Request;
 use rouille::Response;
+use std::intrinsics::unreachable;
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 
@@ -16,7 +17,7 @@ pub struct LeasesTemplate {
 
 /// All the fields that we keep track of during execution of the server
 pub struct Context {
-    settings: crate::config::Settings,
+    pub settings: crate::config::Settings,
 }
 
 impl Context {
@@ -57,13 +58,14 @@ fn cmp_from_str(
 }
 
 fn preprocess_leases(leases: &mut Vec<Lease>, params: &RequestParams) {
-    // Only list the most recent lease for each HW address
+    // Only list the latest lease for each HW address
     leases.sort_by(|a, b| {
         String::cmp(&a.hw_addr, &b.hw_addr)
-            .then(DateTime::cmp(&a.expires, &b.expires))
+            .then(DateTime::cmp(&b.expires, &a.expires))
     });
     leases.dedup_by(|a, b| a.hw_addr == b.hw_addr);
 
+    // Sort by field if sort parameter is provided in the request
     if let Some(field) = &params.sort_on {
         debug!("Sorting on {field}");
         match cmp_from_str(field) {
@@ -78,6 +80,8 @@ fn preprocess_leases(leases: &mut Vec<Lease>, params: &RequestParams) {
             }
             None => warn!("Invalid sort field: {field}"),
         }
+    } else { // Otherwise default to sorting by ip address
+        leases.sort_by(|a, b| Ipv4Addr::cmp(&a.ip_addr, &b.ip_addr));
     }
 }
 
@@ -92,8 +96,10 @@ fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
         let files = files_in_dir(&ctx.settings.leases_db);
         match files {
             Ok(files) => {
+                // Parse all entries in all files into a vec of vecs
                 let results: Result<Vec<Vec<Lease>>, FileParseError> =
                     files.iter().map(|f| crate::lease::parse_file(f)).collect();
+                // Flatten success case into a single vector
                 results.map(|r| r.into_iter().flatten().collect())
             }
             Err(e) => {
@@ -106,16 +112,18 @@ fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
     else if ctx.settings.leases_db.is_file() {
         lease::parse_file(&ctx.settings.leases_db)
     } else {
-        unreachable!("right?");
+        unreachable!("Right? I don't see any enum for this in std::fs");
     };
 
     match leases {
         Ok(mut leases) => {
             preprocess_leases(&mut leases, &params);
             let template = LeasesTemplate { leases };
-            // TODO: handle error
-            let html = template.render().unwrap();
-            Response::html(html)
+            match template.render() {
+                Ok(html) => Response::html(html),
+                Err(_) => todo!("Askama doesnt document what can go wrong"),
+            }
+            
         }
         Err(e) => Response::text(format!("Error: {e}")).with_status_code(500),
     }

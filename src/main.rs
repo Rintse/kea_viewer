@@ -1,14 +1,21 @@
 mod config;
 mod lease;
 mod server;
+use log::error;
 use crate::server::handler;
 use log::info;
 
 fn main() {
-    let cfg = config::Settings::new();
-    let ctx = server::Context::new(cfg.clone());
-
     env_logger::init();
-    info!("Hosting server on http://{}", cfg.bind_addr);
-    rouille::start_server(cfg.bind_addr, move |r| handler(&ctx, r));
+
+    let ctx = match config::Settings::new() {
+        Ok(cfg) => server::Context::new(cfg.clone()),
+        Err(e) => {
+            error!("{e}");
+            return
+        },
+    };
+
+    info!("Hosting server on http://{}", ctx.settings.bind_addr);
+    rouille::start_server(ctx.settings.bind_addr, move |r| handler(&ctx, r));
 }
