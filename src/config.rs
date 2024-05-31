@@ -21,8 +21,9 @@ impl Settings {
             .unwrap_or("/var/db/kea/".into());
 
         let bind_addr = match env::var("BIND_ADDR") {
-            Ok(addr) => addr.parse::<SocketAddrV4>()
-                .map_err(|_| Error::AddrParse(addr.to_owned()))?,
+            Ok(addr) => addr
+                .parse::<SocketAddrV4>()
+                .map_err(|_| Error::AddrParse(addr.clone()))?,
             Err(_) => "127.0.0.1:8080".parse::<SocketAddrV4>().unwrap(),
         };
 

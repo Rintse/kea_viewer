@@ -1,8 +1,8 @@
 mod config;
 mod lease;
 mod server;
-use log::error;
 use crate::server::handler;
+use log::error;
 use log::info;
 
 fn main() {
@@ -12,8 +12,8 @@ fn main() {
         Ok(cfg) => server::Context::new(cfg.clone()),
         Err(e) => {
             error!("{e}");
-            return
-        },
+            return;
+        }
     };
 
     info!("Hosting server on http://{}", ctx.settings.bind_addr);

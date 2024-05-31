@@ -5,7 +5,6 @@ use chrono::DateTime;
 use log::{debug, info, warn};
 use rouille::Request;
 use rouille::Response;
-use std::intrinsics::unreachable;
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 
@@ -68,29 +67,29 @@ fn preprocess_leases(leases: &mut Vec<Lease>, params: &RequestParams) {
     // Sort by field if sort parameter is provided in the request
     if let Some(field) = &params.sort_on {
         debug!("Sorting on {field}");
-        match cmp_from_str(field) {
-            Some(cmp) => {
-                if params.sort_desc {
-                    debug!("Sorting in descending order");
-                    leases.sort_by(|a, b| cmp(b, a));
-                } else {
-                    debug!("Sorting in ascending order");
-                    leases.sort_by(cmp);
-                }
+        if let Some(cmp) = cmp_from_str(field) {
+            if params.sort_desc {
+                debug!("Sorting in descending order");
+                leases.sort_by(|a, b| cmp(b, a));
+            } else {
+                debug!("Sorting in ascending order");
+                leases.sort_by(cmp);
             }
-            None => warn!("Invalid sort field: {field}"),
+        } else {
+            warn!("Invalid sort field: {field}");
         }
-    } else { // Otherwise default to sorting by ip address
+    } else {
+        // Otherwise default to sorting by ip address
         leases.sort_by(|a, b| Ipv4Addr::cmp(&a.ip_addr, &b.ip_addr));
     }
 }
 
 fn files_in_dir(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
     let files = std::fs::read_dir(dir);
-    files.map(|files| files.filter_map(|r| r.ok()).map(|r| r.path()).collect())
+    files.map(|files| files.filter_map(std::result::Result::ok).map(|r| r.path()).collect())
 }
 
-fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
+fn leases_handler(ctx: &Context, params: &RequestParams) -> Response {
     // For a directory, look at all files
     let leases = if ctx.settings.leases_db.is_dir() {
         let files = files_in_dir(&ctx.settings.leases_db);
@@ -117,13 +116,12 @@ fn leases_handler(ctx: &Context, params: RequestParams) -> Response {
 
     match leases {
         Ok(mut leases) => {
-            preprocess_leases(&mut leases, &params);
+            preprocess_leases(&mut leases, params);
             let template = LeasesTemplate { leases };
             match template.render() {
                 Ok(html) => Response::html(html),
                 Err(_) => todo!("Askama doesnt document what can go wrong"),
             }
-            
         }
         Err(e) => Response::text(format!("Error: {e}")).with_status_code(500),
     }
@@ -145,7 +143,7 @@ pub fn handler(ctx: &Context, request: &Request) -> Response {
     let params = RequestParams::from_request(request);
 
     match request.url().as_str() {
-        "/" => leases_handler(ctx, params),
+        "/" => leases_handler(ctx, &params),
         "/favicon.ico" => favicon_handler(),
         _ => Response::empty_404(),
     }
