@@ -1,9 +1,9 @@
 # kea leases viewer
 
-**WIP.**  
 A simple HTTP server that serves up HTML pages containing the current leases of
 the `kea` DHCP server.
 
+![example page](./example.png)
 
 ## Configuration
 

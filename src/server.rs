@@ -90,6 +90,11 @@ fn files_in_dir(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
 }
 
 fn leases_handler(ctx: &Context, params: &RequestParams) -> Response {
+    if !ctx.settings.leases_db.exists() {
+        return Response::text("Could not open leases file(s)")
+            .with_status_code(500);
+    }
+
     // For a directory, look at all files
     let leases = if ctx.settings.leases_db.is_dir() {
         let files = files_in_dir(&ctx.settings.leases_db);
@@ -110,7 +115,8 @@ fn leases_handler(ctx: &Context, params: &RequestParams) -> Response {
     // For a file, read just the one
     else if ctx.settings.leases_db.is_file() {
         lease::parse_file(&ctx.settings.leases_db)
-    } else {
+    } 
+    else {
         unreachable!("Right? I don't see any enum for this in std::fs");
     };
 
