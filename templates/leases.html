@@ -37,10 +37,10 @@
                 background-color: #f1f1f1;
             }
             .collapsed.collapse-button::before {
-                content: '⯈';
+                content: '⯈ ';
             }
             :not(.collapsed).collapse-button::before {
-                content: '⯆';
+                content: '⯆ ';
             }
             .collapsed.details-list {
                 display: none;
@@ -79,7 +79,7 @@
             <tbody>
                 {% for lease in leases %}
                 <tr>
-                    <td class="collapse-button">{{ lease.ip_addr }}</td>
+                    <td><span class="collapse-button"></span>{{ lease.ip_addr }}</td>
                     <td>{{ lease.hw_addr }}</td>
                     <td>{{ crate::lease::local_time(lease.expires) }}</td>
 
@@ -164,21 +164,20 @@
             </tbody>
         </table>
         <script>
+            let get_parent_list = function(button) {
+                return button.parentElement.parentElement.nextElementSibling
+            }
+
             let buttons = document.getElementsByClassName("collapse-button");
             for (let button of buttons) {
                 button.addEventListener("click", function() {
-                    // cancel click event if selecting text
-                    if (document.getSelection().type === 'Range') return;
-
                     this.classList.toggle("collapsed");
-                    // Get the next row and toggle its display variable
-                    let details = this.parentElement.nextElementSibling;
+                    let details = get_parent_list(this);
                     details.classList.toggle("collapsed");
                 });
                 
                 button.classList.add("collapsed");
-                let details = button.parentElement.nextElementSibling;
-                details.classList.add("collapsed")
+                get_parent_list(button).classList.add("collapsed")
             }
 
             document.getElementsByClassName("expand-all")[0].addEventListener(
