@@ -3,30 +3,47 @@
     <head>
         <title>kea leases</title>
         <style>
-            .main-table {
+            body {
                 margin-top: 10px;
                 margin-left: 6px;
-                font-size: 12pt;
-                table-layout: auto !important;
+                font-family: Courier New;
+            }
+            .main-table {
                 width: 80%;
+                margin-bottom: 40px;
+                font-size: 10pt;
+                table-layout: auto !important;
+            }
+            .footer {
+                border: 1px solid black;
+                width: 80%;
+                padding-top: 2px;
+                padding-left: 4px;
+                font-size: 14px;
+                height: 34px;
+                background-color: #e7e7e7;
+                position: fixed;
+                bottom: 0;
+            }
+            .footer button {
+                font-family: Courier New;
+                font-size: 12px;
+                float: right;
+                border: none;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
             }
             th, td, thead th, tbody td, tfoot td, tfoot th {
                 width: auto !important;
                 padding: 4px;
-            }
-            .main-table th {
-                font-size: 14pt;
             }
             table, th, td {
                 border: 1px solid;
                 border-collapse: collapse;
                 text-align: left;
             }
-            .details-table th {
-                font-size: 10pt;
-            }
             .details-table {
-                font-size: 10pt;
                 border: none;
             }
             .details-table * {
@@ -48,9 +65,6 @@
         </style>
     </head>
     <body>
-        <button class="expand-all">Expand all</button>
-        <button class="collapse-all">Collapse all</button>
-        <br>
         <table class="main-table">
             <thead>
                 <tr>
@@ -163,7 +177,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="footer">
+            <span>Last updated: <span class="datetime">-</span></span>
+            <button class="expand-all">Expand all</button><br>
+            <button class="collapse-all">Collapse all</button>
+        </div>
         <script>
+            document.getElementsByClassName("datetime")[0].innerHTML=new Date().toLocaleString()
             let get_parent_list = function(button) {
                 return button.parentElement.parentElement.nextElementSibling
             }
