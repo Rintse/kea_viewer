@@ -6,7 +6,7 @@ use log::{debug, info, warn};
 use rouille::Request;
 use rouille::Response;
 use std::net::Ipv4Addr;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Template)]
 #[template(path = "leases.html")]
@@ -84,20 +84,32 @@ fn preprocess_leases(leases: &mut Vec<Lease>, params: &RequestParams) {
     }
 }
 
-fn files_in_dir(dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
-    let files = std::fs::read_dir(dir);
-    files.map(|files| files.filter_map(std::result::Result::ok).map(|r| r.path()).collect())
+fn matching_files(pattern: &str) -> Result<Vec<PathBuf>, std::io::Error> {
+    assert!(pattern.ends_with('*'));
+
+    let base = &pattern[0..pattern.len()-1];
+    let base_path = PathBuf::from(base);
+    let base_dir = base_path.parent().unwrap();
+
+    eprintln!("base {base:?}");
+    eprintln!("base_dir {base_dir:?}");
+    eprintln!("base_path {base_path:?}");
+
+    let files = std::fs::read_dir(base_dir);
+    files.map(|files| files
+        .filter_map(std::result::Result::ok)
+        .map(|r| r.path())
+        .filter(|p| p.to_str().unwrap().starts_with(base))
+        .filter(|p| p.extension().unwrap() != "lock")
+        .collect()
+    )
 }
 
 fn leases_handler(ctx: &Context, params: &RequestParams) -> Response {
-    if !ctx.settings.leases_db.exists() {
-        return Response::text("Could not open leases file(s)")
-            .with_status_code(500);
-    }
-
     // For a directory, look at all files
-    let leases = if ctx.settings.leases_db.is_dir() {
-        let files = files_in_dir(&ctx.settings.leases_db);
+    let leases = if ctx.settings.leases_db.ends_with('*') {
+        let files = matching_files(&ctx.settings.leases_db);
+        eprintln!("{files:?}");
         match files {
             Ok(files) => {
                 // Parse all entries in all files into a vec of vecs
@@ -112,12 +124,13 @@ fn leases_handler(ctx: &Context, params: &RequestParams) -> Response {
             }
         }
     }
-    // For a file, read just the one
-    else if ctx.settings.leases_db.is_file() {
-        lease::parse_file(&ctx.settings.leases_db)
-    } 
     else {
-        unreachable!("Right? I don't see any enum for this in std::fs");
+        let path = PathBuf::from(&ctx.settings.leases_db);
+        if !path.exists() {
+            return Response::text("Could not open leases file(s)")
+                .with_status_code(500);
+        }
+        lease::parse_file(&path)
     };
 
     match leases {
